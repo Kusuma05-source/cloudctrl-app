@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CloudCtrl Weather App</title>
+
+<!-- Google Font: Poppins -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(-45deg, #83a4d4, #b6fbff, #c9d6ff, #e2e2e2);
+    background-size: 400% 400%;
+    animation: gradientMove 3s ease infinite;
+    text-align: center;
+    padding: 50px;
+    color: #333;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+ .container {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px 30px;
+    border-radius: 12px;
+    display: flex;                /* ADD */
+    flex-direction: column;       /* ADD */
+    align-items: center;          /* ADD */
+    gap: 10px;                    /* ADD */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    backdrop-filter: blur(6px);
+}
+
+
+  h1 {
+    margin-bottom: 15px;
+  }
+
+  input {
+    padding: 10px;
+    width: 200px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: inherit;
+  }
+
+  button {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    background-color: #3498db;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #2980b9;
+  }
+
+  .result {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+
+  .error {
+    color: #b00020;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌤 CloudCtrl</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name" />
+    <button id="getWeatherBtn">Get Weather</button>
+    <button id="getLocationBtn">📍 Use My Location</button>
+    <div id="weatherResult" class="result"></div>
+  </div>
+
+<script>
+    const apiKey = "45e7fe07708b6e6deb1b494cab375b85";
+
+    function showError(msg) {
+        console.error(msg);
+        document.getElementById("weatherResult").innerHTML = `<p class="error">${msg}</p>`;
+    }
+
+    document.getElementById("getWeatherBtn").addEventListener("click", () => {
+        const city = document.getElementById("cityInput").value.trim();
+        if (city) {
+            getWeatherByCity(city);
+        } else {
+            alert("Please enter a city name.");
+        }
+    });
+
+    document.getElementById("getLocationBtn").addEventListener("click", () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    getWeatherByCoords(lat, lon);
+                },
+                () => {
+                    showError("Unable to retrieve your location.");
+                }
+            );
+        } else {
+            showError("Geolocation is not supported by your browser.");
+        }
+    });
+
+    function getWeatherByCity(city) {
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+            .then(response => {
+                if (!response.ok) throw new Error("City not found");
+                return response.json();
+            })
+            .then(displayWeather)
+            .catch(error => showError(error.message));
+    }
+
+    function getWeatherByCoords(lat, lon) {
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+            .then(response => {
+                if (!response.ok) throw new Error("Location not found");
+                return response.json();
+            })
+            .then(displayWeather)
+            .catch(error => showError(error.message));
+    }
+
+    function displayWeather(data) {
+        document.getElementById("weatherResult").innerHTML = `
+            <h3>${data.name}, ${data.sys.country}</h3>
+            <p>Temperature: ${data.main.temp}°C</p>
+            <p>Weather: ${data.weather[0].description}</p>
+        `;
+    }
+</script>
+</body>
+</html>
